@@ -23,4 +23,19 @@ describe('Customer Prompts', () => {
         assert.ok('text' in text && text.text.includes('get_customer'), 'Prompt should reference the get_customer tool')
         assert.ok('text' in text && text.text.includes('John'), 'Prompt should include the query')
     })
+
+    it('should return the create_customer_prompt', async () => {
+        const customer = {
+            name: "Test",
+            phone: "000000999"
+        }
+
+        const result = await client.getPrompt({
+            name: 'create_customer_prompt',
+            arguments: customer,
+        })
+        const text = result.messages[0].content
+        assert.ok('text' in text && text.text.includes('create_customer'), 'Prompt should reference the create_customer tool')
+        assert.ok('text' in text && text.text.includes('Test'), 'Prompt should include the customer')
+    })
 })

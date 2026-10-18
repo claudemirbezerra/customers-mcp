@@ -7,6 +7,7 @@ import { registerGetCustomerTool } from "./tools/getCustomer.ts";
 import { registerFindCustomerPrompt } from "./prompts/findCustomer.ts";
 import { registerUpdateCustomerTool } from "./tools/updateCustomer.ts";
 import { registerDeleteCustomerTool } from "./tools/deleteCustomer.ts";
+import { registerCreateCustomerPrompt } from "./prompts/createCustomer.ts";
 
 const BASE_URL = "http://localhost:9999/v1";
 const service = new CustomerService(BASE_URL)
@@ -18,9 +19,10 @@ export const server = new McpServer({
 
 
 registerListCustomersTool(server, service)
-registerApiInfoResource(server, BASE_URL)
-registerCreateCustomerTool(server, service)
-registerGetCustomerTool(server, service)
-registerFindCustomerPrompt(server)
 registerUpdateCustomerTool(server, service)
 registerDeleteCustomerTool(server, service)
+registerCreateCustomerTool(server, service)
+registerGetCustomerTool(server, service)
+registerApiInfoResource(server, BASE_URL)
+registerFindCustomerPrompt(server)
+registerCreateCustomerPrompt(server)
