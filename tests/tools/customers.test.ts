@@ -125,4 +125,28 @@ describe('Customer MCP Suite', () => {
             'Should contain message'
         )
     })
+
+    it('should delete a customer', async () => {
+        const customerToCreate = {
+                name: 'Ana',
+                phone: '9999-9999'
+            }
+        const result = await client.callTool({
+            name: 'create_customer',
+            arguments: customerToCreate
+        }) as unknown as CustomerMutationResult
+
+        const resultDelete = await client.callTool({
+            name: 'delete_customer',
+            arguments: {
+                _id: result.structuredContent.id
+            }
+        }) as unknown as CustomerMutationResult
+    
+        assert.deepStrictEqual(
+            resultDelete.structuredContent.message,
+            `User ${result.structuredContent.id} deleted!`,
+            'Should contain message'
+        )
+    })
 })
