@@ -9,6 +9,7 @@ import { registerUpdateCustomerTool } from "./tools/updateCustomer.ts";
 import { registerDeleteCustomerTool } from "./tools/deleteCustomer.ts";
 import { registerCreateCustomerPrompt } from "./prompts/createCustomer.ts";
 import { registerUpdateCustomerPrompt } from "./prompts/updateCustomer.ts";
+import { registerDeleteCustomerPrompt } from "./prompts/deleteCustomer.ts";
 
 const BASE_URL = "http://localhost:9999/v1";
 const service = new CustomerService(BASE_URL)
@@ -28,3 +29,4 @@ registerApiInfoResource(server, BASE_URL)
 registerFindCustomerPrompt(server)
 registerCreateCustomerPrompt(server)
 registerUpdateCustomerPrompt(server)
+registerDeleteCustomerPrompt(server)

@@ -54,6 +54,20 @@ describe('Customer Prompts', () => {
         assert.ok('text' in text && text.text.includes('update_customer'), 'Prompt should reference the update_customer tool')
         assert.ok('text' in text && text.text.includes('Test'), 'Prompt should include the customer')
     })
+    
+    it('should return the delete_customer_prompt', async () => {
+        const customerToDelete = {
+            _id: "123456"
+        }
+
+        const result = await client.getPrompt({
+            name: 'delete_customer_prompt',
+            arguments: customerToDelete,
+        })
+        const text = result.messages[0].content
+        assert.ok('text' in text && text.text.includes('delete_customer'), 'Prompt should reference the delete_customer tool')
+        assert.ok('text' in text && text.text.includes(`${customerToDelete._id}`), 'Prompt should include the customer')
+    })
 })
 
    
