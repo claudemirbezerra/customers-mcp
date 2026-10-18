@@ -16,4 +16,16 @@ export const CustomerQuerySchema = z.object({
 
 export type CustomerQuery = z.infer<typeof CustomerQuerySchema>
 
-export type CreatedCustomer = { message: string, id: string }
+export const CustomerUpdateSchema = CustomerQuerySchema.extend({
+    _id: z.string().describe("MongoDB objectId of the customer")
+})
+
+export type CustomerUpdate = z.infer<typeof CustomerUpdateSchema>
+
+export const CustomerMutationSchema = z.object({
+    id: z.string().optional().describe("MongoDB ObjectId of the customer"),
+    message: z.string().optional().describe("Confirmation message"),
+    isError: z.string().optional().describe("Indicates if an error occurred") 
+})
+
+export type CustomerMutation = z.infer<typeof CustomerMutationSchema>

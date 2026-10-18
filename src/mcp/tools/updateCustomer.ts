@@ -1,6 +1,7 @@
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { CustomerService } from "../../application/customerService.ts";
 import z from "zod";
+import { CustomerMutationSchema, CustomerUpdateSchema } from "../../domain/customer.ts";
 
 export function registerUpdateCustomerTool(
     server: McpServer,
@@ -10,19 +11,12 @@ export function registerUpdateCustomerTool(
         "update_customer",
         {
             description: "update a customer",
-            inputSchema: {
-                _id: z.string().describe('MongoDb identifier of the customer'),
-                name: z.string().describe('Full name of the customer'),
-                phone: z.string().describe('phone number of the customer')
-            },
-            outputSchema: {
-                id: z.string().describe('MongoDB object id of newerly created customer'),
-                message: z.string().describe('Confirmation message')
-            }
+            inputSchema: CustomerUpdateSchema.shape,
+            outputSchema: CustomerMutationSchema.shape
         },
-        async ({ _id, name, phone }) => {
+        async (customerToUpdate) => {
             try {
-                const customer = await service.updateCustomer({ _id, name, phone})
+                const customer = await service.updateCustomer(customerToUpdate)
                 return {
                     content: [
                         {

@@ -2,11 +2,11 @@ import { describe, it, after, before } from 'node:test'
 import assert from 'node:assert'
 import { createTestClient } from '../helpers.ts'
 import { Client } from '@modelcontextprotocol/sdk/client'
-import { type CreatedCustomer, type Customer } from '../../src/domain/customer.ts'
+import { type CustomerMutation, type Customer } from '../../src/domain/customer.ts'
 
 type CustomersResult = { structuredContent: { customers: Customer[] }}
 type CustomerResult = { structuredContent: { customer: Customer }}
-type CreateCustomerResult = { structuredContent: CreatedCustomer }
+type CustomerMutationResult = { structuredContent: CustomerMutation }
 
 describe('Customer MCP Suite', () => {
     let client: Client
@@ -39,7 +39,7 @@ describe('Customer MCP Suite', () => {
         const result = await client.callTool({
             name: 'create_customer',
             arguments: customer
-        }) as unknown as CreateCustomerResult
+        }) as unknown as CustomerMutationResult
 
         assert.ok(
             result.structuredContent.id,
@@ -62,7 +62,7 @@ describe('Customer MCP Suite', () => {
         await client.callTool({
             name: 'create_customer',
             arguments: customer
-        }) as unknown as CreateCustomerResult
+        }) as unknown as CustomerMutationResult
 
         const result = await client.callTool({
             name: 'get_customer',
@@ -91,7 +91,7 @@ describe('Customer MCP Suite', () => {
         const result = await client.callTool({
             name: 'create_customer',
             arguments: customerToCreate
-        }) as unknown as CreateCustomerResult
+        }) as unknown as CustomerMutationResult
 
 
         const customerToUpdate = {
@@ -103,7 +103,7 @@ describe('Customer MCP Suite', () => {
         const resultUpdate = await client.callTool({
             name: 'update_customer',
             arguments: customerToUpdate
-        }) as unknown as CreateCustomerResult
+        }) as unknown as CustomerMutationResult
 
         const resultGet = await client.callTool({
             name: 'get_customer',
