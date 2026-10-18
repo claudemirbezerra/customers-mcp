@@ -16,8 +16,10 @@ export const CustomerQuerySchema = z.object({
 
 export type CustomerQuery = z.infer<typeof CustomerQuerySchema>
 
-export const CustomerUpdateSchema = CustomerQuerySchema.extend({
-    _id: z.string().describe("MongoDB objectId of the customer")
+export const CustomerUpdateSchema = z.object({
+    _id: z.string().describe("MongoDB objectId of the customer"),
+    name: z.string().describe('Full name of the customer'),
+    phone: z.string().describe('phone number of the customer')
 })
 
 export type CustomerUpdate = z.infer<typeof CustomerUpdateSchema>
