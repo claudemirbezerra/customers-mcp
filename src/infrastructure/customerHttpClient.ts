@@ -25,4 +25,16 @@ export class CustomerHttpClient {
         if (res.status === 404) return null
         return res.json() as Promise<Customer>
     }
+
+    async updateCustomer(customer: Customer) {
+        const res = await fetch(`${this.baseUrl}/customers/${customer._id}`, {
+            method: 'PUT',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                "name": customer.name,
+                "phone": customer.phone
+            })
+        })
+        return res.json() as Promise<CreatedCustomer>
+    }
 }

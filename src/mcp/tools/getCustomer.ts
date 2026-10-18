@@ -34,7 +34,7 @@ export function registerGetCustomerTool(
                     content: [
                         {
                             type: "text",
-                            text: `Failed to list customers. Error ${error instanceof Error ? error.message : String(error)}`
+                            text: `Failed to get customers. Error ${error instanceof Error ? error.message : String(error)}`
                         }
                     ]
                 }

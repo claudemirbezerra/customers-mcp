@@ -15,6 +15,10 @@ export class CustomerService {
         return this.client.createCustomer(customer)
     }
 
+    async updateCustomer(customer: Customer) {
+        return this.client.updateCustomer(customer)
+    }
+
     async findCustomer(query: CustomerQuery): Promise<Customer | null> {
         if (query._id) return this.client.getCustomerById(query._id)
 

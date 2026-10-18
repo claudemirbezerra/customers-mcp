@@ -53,7 +53,7 @@ describe('Customer MCP Suite', () => {
         )
     })
 
-    it('should create a customer', async () => {
+    it('should get a customer', async () => {
         const customer = {
                 name: 'Claudemir',
                 phone: '9999-9999'
@@ -80,6 +80,49 @@ describe('Customer MCP Suite', () => {
             result.structuredContent.customer.name,
             customer.name,
             'Should have the correct name'
+        )
+    })
+
+    it('should update a customer', async () => {
+        const customerToCreate = {
+                name: 'Ana',
+                phone: '9999-9999'
+            }
+        const result = await client.callTool({
+            name: 'create_customer',
+            arguments: customerToCreate
+        }) as unknown as CreateCustomerResult
+
+
+        const customerToUpdate = {
+            _id: result.structuredContent.id,
+            name: 'Ana Novo',
+            phone: '9999-9999'
+        }
+
+        const resultUpdate = await client.callTool({
+            name: 'update_customer',
+            arguments: customerToUpdate
+        }) as unknown as CreateCustomerResult
+
+        const resultGet = await client.callTool({
+            name: 'get_customer',
+            arguments: {
+                _id: result.structuredContent.id
+            }
+        }) as unknown as CustomerResult
+
+
+        assert.deepStrictEqual(
+            resultGet.structuredContent.customer.name,
+            customerToUpdate.name,
+            'Should have the same name'
+        )
+    
+        assert.deepStrictEqual(
+            resultUpdate.structuredContent.message,
+            `User ${customerToUpdate._id} updated!`,
+            'Should contain message'
         )
     })
 })

@@ -1,7 +1,6 @@
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { CustomerService } from "../../application/customerService.ts";
 import z from "zod";
-import { CustomerSchema } from "../../domain/customer.ts";
 
 export function registerCreateCustomerTool(
     server: McpServer,
@@ -38,7 +37,7 @@ export function registerCreateCustomerTool(
                     content: [
                         {
                             type: "text",
-                            text: `Failed to list customers. Error ${error instanceof Error ? error.message : String(error)}`
+                            text: `Failed to create customer. Error ${error instanceof Error ? error.message : String(error)}`
                         }
                     ]
                 }
