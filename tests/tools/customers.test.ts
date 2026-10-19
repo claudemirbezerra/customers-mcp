@@ -1,152 +1,151 @@
-import { describe, it, after, before } from 'node:test'
+import { describe, it, afterEach, beforeEach } from 'node:test'
 import assert from 'node:assert'
-import { createTestClient } from '../helpers.ts'
+import { createTestClient, getServiceToken } from '../helpers.ts'
 import { Client } from '@modelcontextprotocol/sdk/client'
-import { type CustomerMutation, type Customer } from '../../src/domain/customer.ts'
+import type { Customer, CustomerMutation } from '../../src/domain/customer.ts'
 
-type CustomersResult = { structuredContent: { customers: Customer[] }}
-type CustomerResult = { structuredContent: { customer: Customer }}
-type CustomerMutationResult = { structuredContent: CustomerMutation }
+type CustomerResult = { structuredContent: { customer?: Customer | null, isError: boolean, message?: string } }
+type CustomersResult = { structuredContent: { customers?: Customer[], isError: boolean, message?: string } }
+type MutationToolResult = { structuredContent: CustomerMutation }
 
-describe('Customer MCP Suite', () => {
-    let client: Client
+describe('Customer Tools', async () => {
+  let client: Client
+  let createdId: string
 
-    before(async () => {
-        client = await createTestClient()
-    })
-    
-    after(async () => {
-        await client.close()
-    })
+  beforeEach(async () => {
+    const serviceToken = await getServiceToken()
+    client = await createTestClient(serviceToken)
+    1;
+  })
 
-    it('should list all clients', async () => {
-        const result = await client.callTool({
-            name: 'list_customers',
-            arguments: {}
-        }) as unknown as CustomersResult
+  afterEach(async () => {
+    await client.close()
+  })
 
-        assert.ok(
-            Array.isArray(result.structuredContent.customers),
-            'should return an array of customers'
-        )
-    })
+  it('should list all customers', async () => {
+    const result = await client.callTool({
+      name: 'list_customers',
+      arguments: {},
+    }) as unknown as CustomersResult
 
-    it('should create a customer', async () => {
-        const customer = {
-                name: 'Ana',
-                phone: '9999-9999'
-            }
-        const result = await client.callTool({
-            name: 'create_customer',
-            arguments: customer
-        }) as unknown as CustomerMutationResult
+    assert.ok(Array.isArray(result.structuredContent.customers), 'Should return an array of customers')
+  })
 
-        assert.ok(
-            result.structuredContent.id,
-            'Should contain id'
-        )
+  it('should create a customer', async () => {
+    const result = await client.callTool({
+      name: 'create_customer',
+      arguments: { name: 'Test MCP User', phone: '999-000-0001' },
+    }) as unknown as MutationToolResult
 
-        assert.deepStrictEqual(
-            result.structuredContent.message,
-            `user ${customer.name} created!`,
-            'Should contain message'
-        )
-    })
+    assert.ok(result.structuredContent.id, 'Should return the new customer id')
+    assert.ok(result.structuredContent.message?.includes('Test MCP User'), 'Confirmation message should include customer name')
+    createdId = result.structuredContent.id
+  })
 
-    it('should get a customer', async () => {
-        const customer = {
-                name: 'Claudemir',
-                phone: '9999-9999'
-            }
+  it('should get a customer by _id', async () => {
+    const result = await client.callTool({
+      name: 'get_customer',
+      arguments: { _id: createdId },
+    }) as unknown as CustomerResult
 
-        await client.callTool({
-            name: 'create_customer',
-            arguments: customer
-        }) as unknown as CustomerMutationResult
+    assert.ok(result.structuredContent.customer, 'Should return a customer object')
+    assert.strictEqual(result.structuredContent.customer!.name, 'Test MCP User')
+  })
 
-        const result = await client.callTool({
-            name: 'get_customer',
-            arguments: {
-                name: 'Clau'
-            }
-        }) as unknown as CustomerResult
+  it('should get a customer by name', async () => {
+    const result = await client.callTool({
+      name: 'get_customer',
+      arguments: { name: 'Test MCP User' },
+    }) as unknown as CustomerResult
 
-        assert.ok(
-            result.structuredContent.customer._id,
-            'Should contain id'
-        )
+    assert.ok(result.structuredContent.customer, 'Should return a customer matching the name')
+    assert.strictEqual(result.structuredContent.customer!.phone, '999-000-0001')
+  })
 
-        assert.deepStrictEqual(
-            result.structuredContent.customer.name,
-            customer.name,
-            'Should have the correct name'
-        )
-    })
+  it('should update a customer', async () => {
+    const result = await client.callTool({
+      name: 'update_customer',
+      arguments: { _id: createdId, name: 'Test MCP User Updated', phone: '999-000-0002' },
+    }) as unknown as MutationToolResult
 
-    it('should update a customer', async () => {
-        const customerToCreate = {
-                name: 'Ana',
-                phone: '9999-9999'
-            }
-        const result = await client.callTool({
-            name: 'create_customer',
-            arguments: customerToCreate
-        }) as unknown as CustomerMutationResult
+    assert.ok(result.structuredContent.message, 'Should return a confirmation message')
+    assert.strictEqual(result.structuredContent.id, createdId)
+  })
 
+  it('should reflect the update when getting by id', async () => {
+    const result = await client.callTool({
+      name: 'get_customer',
+      arguments: { _id: createdId },
+    }) as unknown as CustomerResult
 
-        const customerToUpdate = {
-            _id: result.structuredContent.id,
-            name: 'Ana Novo',
-            phone: '9999-9999'
-        }
+    assert.strictEqual(result.structuredContent.customer!.name, 'Test MCP User Updated')
+    assert.strictEqual(result.structuredContent.customer!.phone, '999-000-0002')
+  })
 
-        const resultUpdate = await client.callTool({
-            name: 'update_customer',
-            arguments: customerToUpdate
-        }) as unknown as CustomerMutationResult
+  it('should delete a customer', async () => {
+    const result = await client.callTool({
+      name: 'delete_customer',
+      arguments: { _id: createdId },
+    }) as unknown as MutationToolResult
 
-        const resultGet = await client.callTool({
-            name: 'get_customer',
-            arguments: {
-                _id: result.structuredContent.id
-            }
-        }) as unknown as CustomerResult
+    assert.ok(result.structuredContent.message, 'Should return a confirmation message')
+  })
 
+  it('should return null when getting a deleted customer by name', async () => {
+    const result = await client.callTool({
+      name: 'get_customer',
+      arguments: { name: 'Test MCP User Updated' },
+    }) as unknown as CustomerResult
 
-        assert.deepStrictEqual(
-            resultGet.structuredContent.customer.name,
-            customerToUpdate.name,
-            'Should have the same name'
-        )
-    
-        assert.deepStrictEqual(
-            resultUpdate.structuredContent.message,
-            `User ${customerToUpdate._id} updated!`,
-            'Should contain message'
-        )
-    })
+    assert.ok(!result.structuredContent?.customer, 'Deleted customer should not be found')
 
-    it('should delete a customer', async () => {
-        const customerToCreate = {
-                name: 'Ana',
-                phone: '9999-9999'
-            }
-        const result = await client.callTool({
-            name: 'create_customer',
-            arguments: customerToCreate
-        }) as unknown as CustomerMutationResult
+  })
 
-        const resultDelete = await client.callTool({
-            name: 'delete_customer',
-            arguments: {
-                _id: result.structuredContent.id
-            }
-        }) as unknown as CustomerMutationResult
-    
-        assert.deepStrictEqual(
-            resultDelete.structuredContent.message,
-            `User ${result.structuredContent.id} deleted!`,
-            'Should contain message'
-        )
-    })
+  it('should return isError when deleting with an invalid id', async () => {
+    const result = await client.callTool({
+      name: 'delete_customer',
+      arguments: { _id: 'not-a-valid-id' },
+    }) as unknown as CustomerResult
+
+    assert.ok(result.structuredContent.isError, 'Should return isError: true for invalid id')
+    assert.strictEqual(result.structuredContent.message, 'Failed to delete customer. Error: HTTP 400 - Bad Request - {"message":"the id is invalid!","id":"not-a-valid-id"}', 'Error message should indicate full error message')
+  })
+
+  it('should return isError when service token is invalid (list_customers)', async () => {
+    const client = await createTestClient('invalid-token-that-does-not-exist');
+    try {
+      const result = await client.callTool({
+        name: 'list_customers',
+        arguments: {},
+      }) as unknown as CustomersResult;
+
+      assert.strictEqual(result.structuredContent.isError, true, 'Should return isError: true for invalid token');
+      assert.ok(
+        result.structuredContent.message!.toLowerCase().includes('unauthorized'),
+        `Error message should mention "unauthorized", got: ${result.structuredContent.message}`
+      );
+    } finally {
+      await client.close();
+    }
+  });
+
+  it('should reach rate limit', async () => {
+
+    let result: CustomersResult = { structuredContent: { isError: false, message: '' } };
+    const maxAttempts = 100;
+    for (let index = 0; index < maxAttempts; index++) {
+      result = await client.callTool({
+        name: 'list_customers',
+        arguments: {},
+      }) as unknown as CustomersResult
+
+      if (result.structuredContent.isError) {
+        break;
+      }
+    }
+
+    assert.ok(result.structuredContent.isError, 'Should return isError: true for rate limit exceeded');
+    assert.strictEqual(result.structuredContent.message, 'Failed to list customers. Error: Rate limit exceeded. Please try again later.', 'Error message should indicate full error message')
+  })
+
 })

@@ -1,47 +1,36 @@
-import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { CustomerService } from "../../application/customerService.ts";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import z from "zod";
+import type { CustomerService } from "../../application/customerService.ts";
+import { CustomerMutationSchema } from "../../domain/customer.ts";
 
 export function registerCreateCustomerTool(
     server: McpServer,
     service: CustomerService
-) {
+): void {
     server.registerTool(
         "create_customer",
         {
-            description: "create a customer",
+            description: "Create a new customer",
             inputSchema: {
-                name: z.string().describe('Full name of the customer'),
-                phone: z.string().describe('phone number of the customer')
+                name: z.string().describe("Full name of the customer"),
+                phone: z.string().describe("Phone number of the customer"),
             },
-            outputSchema: {
-                id: z.string().describe('MongoDB object id of newerly created customer'),
-                message: z.string().describe('Confirmation message')
-            }
+            outputSchema: CustomerMutationSchema.shape,
         },
         async ({ name, phone }) => {
             try {
-                const customer = await service.createCustomer({ name, phone})
+                const result = await service.createCustomer({ name, phone });
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify(customer)
-                        }
-                    ],
-                    structuredContent: customer
-                }
-            } catch (error) {
+                    content: [{ type: "text", text: result.message ?? "" }],
+                    structuredContent: result,
+                };
+            } catch (err) {
+                const message = `Failed to create customer. Error: ${err instanceof Error ? err.message : String(err)}`;
                 return {
-                    isError: true,
-                    content: [
-                        {
-                            type: "text",
-                            text: `Failed to create customer. Error ${error instanceof Error ? error.message : String(error)}`
-                        }
-                    ]
-                }
+                    content: [{ type: "text", text: message }],
+                    structuredContent: { isError: true, message },
+                };
             }
         }
-    )
+    );
 }

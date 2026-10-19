@@ -1,44 +1,33 @@
-import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { CustomerService } from "../../application/customerService.ts";
-import { type CustomerQuery, CustomerQuerySchema, CustomerSchema } from "../../domain/customer.ts";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import z from "zod";
+import type { CustomerService } from "../../application/customerService.ts";
+import { CustomerMutationSchema, CustomerQuerySchema, CustomerSchema } from "../../domain/customer.ts";
 
 export function registerGetCustomerTool(
     server: McpServer,
     service: CustomerService
-) {
+): void {
     server.registerTool(
         "get_customer",
         {
-            description: "find a customer by _id, name or phone number",
+            description: "Find a customer by _id, name, or phone number",
             inputSchema: CustomerQuerySchema,
-            outputSchema: {
-                customer: CustomerSchema.nullable()
-                .describe('Customer details if found, otherwise null!')
-            }
+            outputSchema: CustomerMutationSchema.shape,
         },
-        async (query: CustomerQuery) => {
+        async (query) => {
             try {
-                const customer = await service.findCustomer(query)
+                const customer = await service.findCustomer(query);
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify(customer)
-                        }
-                    ],
-                    structuredContent: { customer }
-                }
-            } catch (error) {
+                    content: [{ type: "text", text: JSON.stringify(customer, null, 2) }],
+                    structuredContent: { customer },
+                };
+            } catch (err) {
+                const message = `Failed to find customer. Error: ${err instanceof Error ? err.message : String(err)}`;
                 return {
-                    isError: true,
-                    content: [
-                        {
-                            type: "text",
-                            text: `Failed to get customers. Error ${error instanceof Error ? error.message : String(error)}`
-                        }
-                    ]
-                }
+                    content: [{ type: "text", text: message }],
+                    structuredContent: { isError: true, message },
+                };
             }
         }
-    )
+    );
 }

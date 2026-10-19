@@ -1,46 +1,33 @@
-import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { CustomerService } from "../../application/customerService.ts";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import z from "zod";
-import { CustomerSchema } from "../../domain/customer.ts";
+import type { CustomerService } from "../../application/customerService.ts";
+import { CustomerMutationSchema, CustomerSchema } from "../../domain/customer.ts";
 
 export function registerListCustomersTool(
     server: McpServer,
     service: CustomerService
-) {
+): void {
     server.registerTool(
         "list_customers",
         {
             description: "List all customers",
             inputSchema: {},
-            outputSchema: {
-                customers: z.array(
-                    CustomerSchema
-                ).describe('Array of all customers')
-            }
+            outputSchema: CustomerMutationSchema.shape,
         },
         async () => {
             try {
-                const customers = await service.listCustomers()
+                const customers = await service.listCustomers();
                 return {
-                    content: [
-                        {
-                            type: "text",
-                            text: JSON.stringify(customers, null, 2)
-                        }
-                    ],
-                    structuredContent: {customers}
-                }
-            } catch (error) {
+                    content: [{ type: "text", text: JSON.stringify(customers, null, 2) }],
+                    structuredContent: { customers },
+                };
+            } catch (err) {
+                const message = `Failed to list customers. Error: ${err instanceof Error ? err.message : String(err)}`;
                 return {
-                    isError: true,
-                    content: [
-                        {
-                            type: "text",
-                            text: `Failed to list customers. Error ${error instanceof Error ? error.message : String(error)}`
-                        }
-                    ]
-                }
+                    content: [{ type: "text", text: message }],
+                    structuredContent: { isError: true, message },
+                };
             }
         }
-    )
+    );
 }
